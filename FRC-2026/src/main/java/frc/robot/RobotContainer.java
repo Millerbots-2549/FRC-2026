@@ -16,14 +16,19 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.Mode;
+import frc.robot.Constants.SimulationConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
+import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.drive.ModuleIO;
-import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.drive.ModuleIOTalonSim;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -42,8 +47,12 @@ public class RobotContainer {
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
+  // Simulation
+  public SwerveDriveSimulation swerveDriveSimulation;
+
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+    swerveDriveSimulation = null;
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
@@ -77,14 +86,22 @@ public class RobotContainer {
         break;
 
       case SIM:
+        /* Create a swerve drive simulation */
+        this.swerveDriveSimulation =
+            new SwerveDriveSimulation(
+                // Specify Configuration
+                SimulationConstants.driveTrainSimulationConfig,
+                // Specify starting pose
+                new Pose2d(3, 3, new Rotation2d()));
+        SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation);
         // Sim robot, instantiate physics sim IO implementations
         drive =
             new Drive(
-                new GyroIO() {},
-                new ModuleIOSim(TunerConstants.FrontLeft),
-                new ModuleIOSim(TunerConstants.FrontRight),
-                new ModuleIOSim(TunerConstants.BackLeft),
-                new ModuleIOSim(TunerConstants.BackRight));
+                new GyroIOSim(swerveDriveSimulation.getGyroSimulation()) {},
+                new ModuleIOTalonSim(swerveDriveSimulation.getModules()[0]),
+                new ModuleIOTalonSim(swerveDriveSimulation.getModules()[1]),
+                new ModuleIOTalonSim(swerveDriveSimulation.getModules()[2]),
+                new ModuleIOTalonSim(swerveDriveSimulation.getModules()[3]));
         break;
 
       default:
@@ -147,6 +164,15 @@ public class RobotContainer {
                 () -> -controller.getLeftX(),
                 () -> Rotation2d.kZero));
 
+    controller
+        .y()
+        .whileTrue(
+            DriveCommands.joystickDrivePointingTowards(
+                drive,
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> new Pose2d(4.5, 4.0, Rotation2d.kZero)));
+
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
@@ -157,7 +183,9 @@ public class RobotContainer {
             Commands.runOnce(
                     () ->
                         drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                            Constants.currentMode == Mode.REAL
+                                ? new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)
+                                : swerveDriveSimulation.getSimulatedDriveTrainPose()),
                     drive)
                 .ignoringDisable(true));
   }
