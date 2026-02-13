@@ -7,7 +7,15 @@
 
 package frc.robot;
 
+import static frc.robot.subsystems.intake.IntakeConstants.ROLLER_MAX_SPEED;
+
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.revrobotics.spark.config.SparkMaxConfig;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -27,9 +35,16 @@ import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.drive.ModuleIOTalonSim;
-import org.ironmaple.simulation.SimulatedArena;
-import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakePivotIO;
+import frc.robot.subsystems.intake.IntakePivotIOSpark;
+import frc.robot.subsystems.intake.IntakeRollerIO;
+import frc.robot.subsystems.intake.IntakeRollerIOSpark;
+import frc.robot.subsystems.shooter.FlywheelIO;
+import frc.robot.subsystems.shooter.FlywheelIOTalonFX;
+import frc.robot.subsystems.shooter.HoodIO;
+import frc.robot.subsystems.shooter.HoodIOTalonFX;
+import frc.robot.subsystems.shooter.Shooter;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -40,6 +55,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
+  private final Intake intake;
+  private final Shooter shooter;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -65,24 +82,14 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.FrontRight),
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
-
-        // The ModuleIOTalonFXS implementation provides an example implementation for
-        // TalonFXS controller connected to a CANdi with a PWM encoder. The
-        // implementations
-        // of ModuleIOTalonFX, ModuleIOTalonFXS, and ModuleIOSpark (from the Spark
-        // swerve
-        // template) can be freely intermixed to support alternative hardware
-        // arrangements.
-        // Please see the AdvantageKit template documentation for more information:
-        // https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template#custom-module-implementations
-        //
-        // drive =
-        // new Drive(
-        // new GyroIOPigeon2(),
-        // new ModuleIOTalonFXS(TunerConstants.FrontLeft),
-        // new ModuleIOTalonFXS(TunerConstants.FrontRight),
-        // new ModuleIOTalonFXS(TunerConstants.BackLeft),
-        // new ModuleIOTalonFXS(TunerConstants.BackRight));
+        intake =
+            new Intake(
+                new IntakePivotIOSpark(),
+                new IntakeRollerIOSpark(new SparkMaxConfig()));
+        shooter =
+            new Shooter(
+                new HoodIOTalonFX(),
+                new FlywheelIOTalonFX());
         break;
 
       case SIM:
@@ -102,6 +109,14 @@ public class RobotContainer {
                 new ModuleIOTalonSim(swerveDriveSimulation.getModules()[1]),
                 new ModuleIOTalonSim(swerveDriveSimulation.getModules()[2]),
                 new ModuleIOTalonSim(swerveDriveSimulation.getModules()[3]));
+        intake = 
+            new Intake(
+                new IntakePivotIO() {},
+                new IntakeRollerIO() {});
+        shooter =
+            new Shooter(
+                new HoodIO() {},
+                new FlywheelIO() {});
         break;
 
       default:
@@ -113,6 +128,14 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+        intake = 
+            new Intake(
+                new IntakePivotIO() {},
+                new IntakeRollerIO() {});
+        shooter =
+            new Shooter(
+                new HoodIO() {},
+                new FlywheelIO() {});
         break;
     }
 
@@ -167,11 +190,12 @@ public class RobotContainer {
     controller
         .y()
         .whileTrue(
-            DriveCommands.joystickDrivePointingTowards(
+            DriveCommands.joystickDrivePointingTowardsWithShooter(
                 drive,
-                () -> -controller.getLeftY(),
+                shooter,
                 () -> -controller.getLeftX(),
-                () -> new Pose2d(4.5, 4.0, Rotation2d.kZero)));
+                () -> -controller.getLeftY(),
+                () -> drive.getPose()));
 
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -188,6 +212,18 @@ public class RobotContainer {
                                 : swerveDriveSimulation.getSimulatedDriveTrainPose()),
                     drive)
                 .ignoringDisable(true));
+
+    intake.setDefaultCommand(Commands.none());
+
+    controller.leftBumper().onTrue(Commands.run(() -> intake.setIntakeAngle(Rotation2d.fromDegrees(20)), intake));
+    controller.rightBumper().onTrue(Commands.run(() -> intake.setIntakeAngle(Rotation2d.fromDegrees(0)), intake));
+    controller.leftTrigger().whileTrue(Commands.run(() -> intake.setRollerSpeed(ROLLER_MAX_SPEED * controller.getLeftTriggerAxis()), intake));
+    controller.rightTrigger().whileTrue(Commands.run(() -> intake.setRollerSpeed(-ROLLER_MAX_SPEED * controller.getRightTriggerAxis()), intake));
+
+    shooter.setDefaultCommand(Commands.run(() -> shooter.sustainHood(), shooter));
+
+    controller.povUp().whileTrue(Commands.run(() -> shooter.raiseHood(), shooter));
+    controller.povDown().whileTrue(Commands.run(() -> shooter.lowerHood(), shooter));
   }
 
   /**
