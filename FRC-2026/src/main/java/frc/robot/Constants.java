@@ -11,6 +11,7 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Volts;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotBase;
 import org.ironmaple.simulation.drivesims.COTS;
@@ -36,6 +37,8 @@ public final class Constants {
     /** Replaying from a log file. */
     REPLAY
   }
+
+  public static final Translation2d HUB_TRANSLATION = new Translation2d(3, 3);
 
   public final class SimulationConstants {
     // Create and configure a drivetrain simulation configuration

@@ -39,8 +39,8 @@ public class Intake extends SubsystemBase {
    *
    * @param angle The setpoint
    */
-  public void setIntakeAngle(Rotation2d angle) {
-    this.pivotIO.setPivotAngle(angle);
+  public void setIntakeAngle(Rotation2d angle, boolean useC) {
+    this.pivotIO.setPivotAngle(angle, useC);
   }
 
   /**
@@ -48,8 +48,8 @@ public class Intake extends SubsystemBase {
    *
    * @param angle The setpoint
    */
-  public void setIntakeAngle(double angle) {
-    this.setIntakeAngle(Rotation2d.fromRadians(angle));
+  public void setIntakeAngle(double angle, boolean useC) {
+    this.setIntakeAngle(Rotation2d.fromRadians(angle), useC);
   }
 
   /**

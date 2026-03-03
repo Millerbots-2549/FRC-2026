@@ -19,9 +19,12 @@ public class Shooter extends SubsystemBase {
   private final FlywheelIOInputsAutoLogged flywheelInputs = new FlywheelIOInputsAutoLogged();
 
   private final PolynomialRegression hoodAngleRegression = ShooterRegression.hoodAutoAimPolynomial;
-  private final PolynomialRegression flywheelSpeedRegression = ShooterRegression.flywheelAutoAimPolynomial;
-  private final InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble> hoodAngleInterpolator = ShooterRegression.hoodAutoAimMap;
-  private final InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble> flywheelSpeedInterpolator = ShooterRegression.flywheelAutoAimMap;
+  private final PolynomialRegression flywheelSpeedRegression =
+      ShooterRegression.flywheelAutoAimPolynomial;
+  private final InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble>
+      hoodAngleInterpolator = ShooterRegression.hoodAutoAimMap;
+  private final InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble>
+      flywheelSpeedInterpolator = ShooterRegression.flywheelAutoAimMap;
 
   /** Creates a new ShooterSubsystem. */
   public Shooter(HoodIO hoodIO, FlywheelIO flywheelIO) {
@@ -40,36 +43,54 @@ public class Shooter extends SubsystemBase {
   }
 
   public void raiseHood() {
-    setpoint += 0.02;
+    setpoint += 0.002;
     sustainHood();
   }
 
   public void lowerHood() {
-    setpoint -= 0.02;
+    setpoint -= 0.002;
     sustainHood();
   }
 
   public void applyAutoAimDistance(double distanceMeters) {
     double hoodAngle;
-    if(ShooterRegression.useHoodAimPolynomial) {
+    if (ShooterRegression.useHoodAimPolynomial) {
       hoodAngle = hoodAngleRegression.predict(distanceMeters);
     } else {
-      hoodAngle = hoodAngleInterpolator.getInterpolated(new InterpolatingDouble(distanceMeters)).value;
+      hoodAngle =
+          hoodAngleInterpolator.getInterpolated(new InterpolatingDouble(distanceMeters)).value;
     }
     double flywheelSpeed;
-    if(ShooterRegression.useHoodAimPolynomial) {
+    if (ShooterRegression.useHoodAimPolynomial) {
       flywheelSpeed = flywheelSpeedRegression.predict(distanceMeters);
     } else {
-      flywheelSpeed = flywheelSpeedInterpolator.getInterpolated(new InterpolatingDouble(distanceMeters)).value;
+      flywheelSpeed =
+          flywheelSpeedInterpolator.getInterpolated(new InterpolatingDouble(distanceMeters)).value;
     }
 
     hoodIO.applySetpoint(Rotation2d.fromRadians(hoodAngle));
     flywheelIO.setVelocity(flywheelSpeed);
   }
 
+  public void setVelocity(double vel) {
+    flywheelIO.setVelocity(vel);
+  }
+
   @Override
   public void periodic() {
     hoodIO.updateInputs(hoodInputs);
     flywheelIO.updateInputs(flywheelInputs);
+  }
+
+  public double getFlywheelVelocity() {
+    return flywheelInputs.flywheelRPM;
+  }
+
+  public double getFlywheelCurrent() {
+    return flywheelInputs.flywheelCurrent;
+  }
+
+  public boolean shooterAtSpeed() {
+    return flywheelIO.atSpeed();
   }
 }

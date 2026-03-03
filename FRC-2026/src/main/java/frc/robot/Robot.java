@@ -66,7 +66,7 @@ public class Robot extends LoggedRobot {
     }
 
     // Start AdvantageKit logger
-    Logger.start();
+    // Logger.start();
 
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our autonomous chooser on the dashboard.
@@ -97,7 +97,9 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically when disabled. */
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    autonomousCommand = robotContainer.getAutonomousCommand();
+  }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override

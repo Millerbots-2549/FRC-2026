@@ -22,4 +22,8 @@ public interface FlywheelIO {
   default void setVoltage(double voltage) {}
 
   default void setVelocity(double velocityRPM) {}
+
+  default boolean atSpeed() {
+    return false;
+  }
 }

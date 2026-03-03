@@ -22,7 +22,7 @@ public interface IntakePivotIO {
 
   default void setPivotOpenLoop(double output) {}
 
-  default void setPivotAngle(Rotation2d target) {}
+  default void setPivotAngle(Rotation2d target, boolean useCOS) {}
 
   default void resetAngle(double resetAngleDeg) {}
 

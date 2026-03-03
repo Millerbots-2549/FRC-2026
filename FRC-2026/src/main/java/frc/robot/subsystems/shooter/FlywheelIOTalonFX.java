@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems.shooter;
 
+import static frc.robot.subsystems.shooter.ShooterConstants.FLYWHEEL_VELOCITY_THRESHOLD;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -13,55 +15,73 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 /** Add your docs here. */
 public class FlywheelIOTalonFX implements FlywheelIO {
-  private final TalonFX motor;
+  private final TalonFX leftMotor;
+  private final TalonFX rightMotor;
 
-  private final VoltageOut motorVoltageControl = new VoltageOut(0);
+  private final VoltageOut leftMotorVoltageControl = new VoltageOut(0);
+  private final VoltageOut rightMotorVoltageControl = new VoltageOut(0);
 
-  private final VelocityVoltage motorVelocityControl = new VelocityVoltage(0);
+  private final VelocityVoltage leftMotorVelocityControl = new VelocityVoltage(0);
+  private final VelocityVoltage rightMotorVelocityControl = new VelocityVoltage(0);
 
-  public static final double SHOOTER_GEAR_RATIO = 1.0 / 5.0;
+  public static final double SHOOTER_GEAR_RATIO = 2.0 / 1.0;
 
   public FlywheelIOTalonFX() {
-    motor = new TalonFX(0);
+    leftMotor = new TalonFX(22);
+    rightMotor = new TalonFX(57);
 
     TalonFXConfiguration config = new TalonFXConfiguration();
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.SupplyCurrentLimit = 40;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
-    config.CurrentLimits.StatorCurrentLimit = 80;
+    config.CurrentLimits.StatorCurrentLimit = 40;
     config.Voltage.PeakForwardVoltage = 12.0;
     config.Voltage.PeakReverseVoltage = -12.0;
-    config.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 0.02;
+    config.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 0.25;
 
-    config.Slot0.kV = 0.14;
-    config.Slot0.kP = 0.4;
+    config.Slot0.kV = 0.22;
+    config.Slot0.kP = 3.4;
+
+    leftMotor.getConfigurator().apply(config);
+    rightMotor.getConfigurator().apply(config);
   }
 
   @Override
   public void updateInputs(FlywheelIOInputs inputs) {
     inputs.flywheelConnected =
         BaseStatusSignal.refreshAll(
-                motor.getMotorVoltage(),
-                motor.getSupplyCurrent(),
-                motor.getDeviceTemp(),
-                motor.getVelocity())
+                leftMotor.getMotorVoltage(),
+                leftMotor.getSupplyCurrent(),
+                leftMotor.getDeviceTemp(),
+                leftMotor.getVelocity())
             .isOK();
-    inputs.flywheelVoltage = motor.getMotorVoltage().getValueAsDouble();
-    inputs.flywheelCurrent = motor.getSupplyCurrent().getValueAsDouble();
-    inputs.flywheelTemperature = motor.getDeviceTemp().getValueAsDouble();
-    inputs.flywheelRPM = (motor.getRotorVelocity().getValueAsDouble() * 60) / SHOOTER_GEAR_RATIO;
+    inputs.flywheelVoltage = leftMotor.getMotorVoltage().getValueAsDouble();
+    inputs.flywheelCurrent = leftMotor.getSupplyCurrent().getValueAsDouble();
+    inputs.flywheelTemperature = leftMotor.getDeviceTemp().getValueAsDouble();
+    inputs.flywheelRPM =
+        (leftMotor.getRotorVelocity().getValueAsDouble() * 60) / SHOOTER_GEAR_RATIO;
   }
 
   @Override
   public void setVoltage(double output) {
-    motor.setControl(motorVoltageControl.withOutput(output));
+    leftMotor.setControl(leftMotorVoltageControl.withOutput(output));
+    rightMotor.setControl(rightMotorVoltageControl.withOutput(-output));
   }
+
+  private double appliedRPM = 0.0;
 
   @Override
   public void setVelocity(double velocityRPM) {
-    double applied = velocityRPM * SHOOTER_GEAR_RATIO / 60.0;
+    appliedRPM = velocityRPM * SHOOTER_GEAR_RATIO / 60.0;
 
-    motor.setControl(motorVelocityControl.withVelocity(applied));
+    leftMotor.setControl(leftMotorVelocityControl.withVelocity(appliedRPM));
+    rightMotor.setControl(rightMotorVelocityControl.withVelocity(-appliedRPM));
+  }
+
+  @Override
+  public boolean atSpeed() {
+    return Math.abs(leftMotor.getRotorVelocity().getValueAsDouble() - appliedRPM)
+        < FLYWHEEL_VELOCITY_THRESHOLD;
   }
 }

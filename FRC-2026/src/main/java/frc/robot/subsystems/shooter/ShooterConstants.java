@@ -6,16 +6,19 @@ package frc.robot.subsystems.shooter;
 
 /** Add your docs here. */
 public class ShooterConstants {
-  public static final int HOOD_MOTOR_ID = 0;
+  public static final int HOOD_SERVO_CHANNEL = 0;
 
   /** in [mm] */
-  public static final double HOOD_COUPLE_DISTANCE = 20;
+  public static final double HOOD_COUPLE_DISTANCE = 171.45;
   /** in [mm] */
-  public static final double SERVO_COUPLE_DISTANCE = 20;
+  public static final double SERVO_COUPLE_DISTANCE = 185.0;
   /** in [radians] */
-  public static final double SERVO_COUPLE_ANGLE = 0.5;
+  public static final double SERVO_COUPLE_ANGLE = 0.0;
   /** in [mm] */
-  public static final int SERVO_MAX_LENGTH = 20;
+  public static final int SERVO_MAX_LENGTH = 140;
   /** in [mm] */
   public static final int SERVO_DEFAULT_LENGTH = 108;
+
+  public static final double FLYWHEEL_STUCK_CURRENT_VEL_RATIO = 40 / 1;
+  public static final double FLYWHEEL_VELOCITY_THRESHOLD = 15.0;
 }
