@@ -35,7 +35,11 @@ import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.drive.ModuleIOTalonSim;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.indexer.IndexerIO;
+import frc.robot.subsystems.indexer.IndexerIOTalonFX;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakePivotIO;
 import frc.robot.subsystems.intake.IntakePivotIOSpark;
 import frc.robot.subsystems.intake.IntakeRollerIO;
@@ -57,6 +61,7 @@ public class RobotContainer {
   private final Drive drive;
   private final Intake intake;
   private final Shooter shooter;
+  private final Indexer indexer;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -86,8 +91,8 @@ public class RobotContainer {
             new Intake(
                 new IntakePivotIOSpark(),
                 new IntakeRollerIOSpark(new SparkMaxConfig()));
-        shooter =
-            new Shooter(
+        // indexer = new Indexer(new IndexerIOSpark(new SparkMaxConfig()));
+        indexer = new Indexer(new IndexerIOTalonFX());
                 new HoodIOTalonFX(),
                 new FlywheelIOTalonFX());
         break;
@@ -111,7 +116,7 @@ public class RobotContainer {
                 new ModuleIOTalonSim(swerveDriveSimulation.getModules()[3]));
         intake = 
             new Intake(
-                new IntakePivotIO() {},
+        indexer = new Indexer(new IndexerIO() {});
                 new IntakeRollerIO() {});
         shooter =
             new Shooter(
@@ -130,7 +135,7 @@ public class RobotContainer {
                 new ModuleIO() {});
         intake = 
             new Intake(
-                new IntakePivotIO() {},
+        indexer = new Indexer(new IndexerIO() {});
                 new IntakeRollerIO() {});
         shooter =
             new Shooter(
