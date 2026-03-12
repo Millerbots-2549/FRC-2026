@@ -23,7 +23,6 @@ import frc.robot.Constants.Mode;
 import frc.robot.Constants.SimulationConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.ShooterCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -185,32 +184,12 @@ public class RobotContainer {
             () -> -driverController.getLeftX(),
             () -> -driverController.getRightX()));
 
-    // Lock to 0° when A button is held
-    driverController
-        .a()
-        .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> -driverController.getLeftY(),
-                () -> -driverController.getLeftX(),
-                () -> Rotation2d.kZero));
-
-    driverController
-        .y()
-        .whileTrue(
-            DriveCommands.joystickDrivePointingTowardsWithShooter(
-                drive,
-                shooter,
-                () -> -driverController.getLeftX(),
-                () -> -driverController.getLeftY(),
-                () -> drive.getPose()));
-
     // Switch to X pattern when X button is pressed
     driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     // Reset gyro to 0° when B button is pressed
     driverController
-        .b()
+        .y()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -230,7 +209,7 @@ public class RobotContainer {
             Commands.run(
                 () ->
                     intake.setIntakeAngle(
-                        Rotation2d.fromDegrees(IntakeConstants.PIVOT_MAX_DEGREES + 12), true),
+                        Rotation2d.fromDegrees(IntakeConstants.PIVOT_MAX_DEGREES), true),
                 intake));
     manipController
         .rightBumper()
@@ -248,15 +227,6 @@ public class RobotContainer {
             Commands.run(
                 () -> {
                   intake.setRollerSpeed(-ROLLER_MAX_SPEED * manipController.getRightTriggerAxis());
-                  intake.setIntakeAngle(
-                      Rotation2d.fromDegrees(IntakeConstants.PIVOT_MAX_DEGREES + 44), false);
-                },
-                intake))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  intake.setIntakeAngle(
-                      Rotation2d.fromDegrees(IntakeConstants.PIVOT_MAX_DEGREES + 12), true);
                 },
                 intake));
 
@@ -275,13 +245,6 @@ public class RobotContainer {
             },
             shooter));
 
-    /*manipController
-    .y()
-    .whileTrue(
-        ShooterCommands.shootWithHoming(
-            shooter,
-            indexer,
-            () -> drive.getPose().getTranslation().getDistance(Constants.HUB_TRANSLATION))); */
     manipController.b().whileTrue(Commands.run(() -> indexer.setRollerSpeed(1400), indexer));
 
     manipController // short
@@ -289,7 +252,7 @@ public class RobotContainer {
         .whileTrue(
             Commands.run(
                 () -> {
-                  shooter.setVelocity(-2810);
+                  shooter.setVelocity(-2700);
                   shooter.applyHoodSetpoint(Rotation2d.fromDegrees(5));
                 },
                 shooter));
@@ -307,21 +270,9 @@ public class RobotContainer {
         .whileTrue(
             Commands.run(
                 () -> {
-                  shooter.setVelocity(-300000);
-                  shooter.applyHoodSetpoint(Rotation2d.fromDegrees(25));
+                  indexer.setRollerSpeed(-200);
                 },
                 shooter));
-    manipController.povUp().whileTrue(ShooterCommands.shootWithHoming(shooter, indexer, null));
-    /*manipController
-    .y()
-    .whileTrue(
-        Commands.run(
-            () -> {
-              shooter.setVelocity(800);
-              indexer.setRollerSpeed(-1200);
-            },
-            shooter,
-            indexer));*/
   }
 
   /**

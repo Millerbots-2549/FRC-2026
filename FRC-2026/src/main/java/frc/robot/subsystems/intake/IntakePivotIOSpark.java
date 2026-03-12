@@ -10,7 +10,6 @@ import static frc.robot.subsystems.intake.IntakeConstants.PIVOT_KD;
 import static frc.robot.subsystems.intake.IntakeConstants.PIVOT_KI;
 import static frc.robot.subsystems.intake.IntakeConstants.PIVOT_KP;
 import static frc.robot.subsystems.intake.IntakeConstants.PIVOT_MAX_ACCELERATION;
-import static frc.robot.subsystems.intake.IntakeConstants.PIVOT_MAX_DEGREES;
 import static frc.robot.subsystems.intake.IntakeConstants.PIVOT_MAX_VELOCITY;
 import static frc.robot.subsystems.intake.IntakeConstants.PIVOT_MOTOR_ID;
 import static frc.robot.util.PhoenixUtil.ifOk;
@@ -53,6 +52,8 @@ public class IntakePivotIOSpark implements IntakePivotIO {
 
     pivotConfig.absoluteEncoder.positionConversionFactor(PIVOT_GEAR_RATIO);
     pivotConfig.absoluteEncoder.inverted(false);
+
+    pivotConfig.smartCurrentLimit(40);
 
     pivotMotor.configure(
         pivotConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -112,13 +113,8 @@ public class IntakePivotIOSpark implements IntakePivotIO {
     double output = pivotController.calculate(pivotEncoder.getPosition(), pivotSetpoint);
     SmartDashboard.putNumber("output", output);
     if (useCOS) output -= Math.sin(pivotEncoder.getPosition()) * PIVOT_KCOS;
-    if (output < -0.05) {
-      output -= 0.1;
-    } else if (pivotEncoder.getPosition() > Math.toRadians(PIVOT_MAX_DEGREES) - 0.3) {
-      // output -= 0.2;
-    }
     SmartDashboard.putNumber("output + g", output);
 
-    pivotMotor.set(MathUtil.clamp(output, -0.155, 0.155));
+    pivotMotor.set(MathUtil.clamp(output, -0.162, 0.121));
   }
 }

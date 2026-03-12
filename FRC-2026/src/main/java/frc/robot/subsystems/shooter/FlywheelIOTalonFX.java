@@ -38,10 +38,10 @@ public class FlywheelIOTalonFX implements FlywheelIO {
     config.CurrentLimits.StatorCurrentLimit = 40;
     config.Voltage.PeakForwardVoltage = 12.0;
     config.Voltage.PeakReverseVoltage = -12.0;
-    config.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 0.25;
+    config.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 0.5;
 
     config.Slot0.kV = 0.22;
-    config.Slot0.kP = 3.4;
+    config.Slot0.kP = 2.8;
 
     leftMotor.getConfigurator().apply(config);
     rightMotor.getConfigurator().apply(config);

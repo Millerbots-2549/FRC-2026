@@ -11,6 +11,7 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Volts;
 
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -37,6 +38,10 @@ public final class Constants {
     /** Replaying from a log file. */
     REPLAY
   }
+
+  public static final SlewRateLimiter X_LIMITER = new SlewRateLimiter(4.75);
+  public static final SlewRateLimiter Y_LIMITER = new SlewRateLimiter(4.75);
+  public static final SlewRateLimiter THETA_LIMITER = new SlewRateLimiter(5.5);
 
   public static final Translation2d HUB_TRANSLATION = new Translation2d(3, 3);
 
