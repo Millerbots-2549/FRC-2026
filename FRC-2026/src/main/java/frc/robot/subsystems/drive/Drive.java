@@ -318,6 +318,10 @@ public class Drive extends SubsystemBase {
     return poseEstimator.getEstimatedPosition();
   }
 
+  public double getDistToHub() {
+    return getPose().getTranslation().getDistance(Constants.HUB_TRANSLATION);
+  }
+
   /** Returns the current odometry rotation. */
   public Rotation2d getRotation() {
     return getPose().getRotation();

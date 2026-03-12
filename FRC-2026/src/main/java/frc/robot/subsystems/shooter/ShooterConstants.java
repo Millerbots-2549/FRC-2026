@@ -21,4 +21,6 @@ public class ShooterConstants {
 
   public static final double FLYWHEEL_STUCK_CURRENT_VEL_RATIO = 40 / 1;
   public static final double FLYWHEEL_VELOCITY_THRESHOLD = 15.0;
+
+  public static final double FLYWHEEL_AGITATE_VELOCITY = 150.0;
 }
