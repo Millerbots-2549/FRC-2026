@@ -44,6 +44,7 @@ public final class Constants {
   public static final SlewRateLimiter THETA_LIMITER = new SlewRateLimiter(5.5);
 
   public static final Translation2d HUB_TRANSLATION = new Translation2d(3, 3);
+  public static final Translation2d ROBOT_AGAINST_HUB = new Translation2d(2, 3);
 
   public final class SimulationConstants {
     // Create and configure a drivetrain simulation configuration
