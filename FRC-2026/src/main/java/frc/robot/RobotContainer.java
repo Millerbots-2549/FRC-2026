@@ -23,6 +23,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.Constants.SimulationConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.ShooterCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -146,8 +147,8 @@ public class RobotContainer {
 
     // Set up manual autos
     autoChooser.addOption("Shoot from against hub", Autos.shootFromHub(shooter, indexer));
-    autoChooser.addOption(
-        "Shoot from start pos", Autos.shootAllBallsFromStartPos(drive, shooter, indexer));
+    autoChooser.addOption("Shoot from start pos", Autos.shootAllBallsFromStartPos(drive, shooter, indexer));
+    autoChooser.addOption("One Cycle", Autos.singleCycleAuto(shooter, indexer, intake, drive));
 
     // Set up SysId routines
     autoChooser.addOption(
@@ -205,30 +206,16 @@ public class RobotContainer {
 
     manipController
         .leftBumper()
-        .onTrue(
-            Commands.run(
-                () ->
-                    intake.setIntakeAngle(
-                        Rotation2d.fromDegrees(IntakeConstants.PIVOT_MAX_DEGREES), true),
-                intake));
+        .onTrue(Commands.run(() -> intake.setIntakeAngle(Rotation2d.fromDegrees(IntakeConstants.PIVOT_MAX_DEGREES), true), intake));
     manipController
         .rightBumper()
         .onTrue(Commands.run(() -> intake.setIntakeAngle(Rotation2d.fromDegrees(0), true), intake));
     manipController
         .leftTrigger()
-        .whileTrue(
-            Commands.run(
-                () ->
-                    intake.setRollerSpeed(ROLLER_MAX_SPEED * manipController.getLeftTriggerAxis()),
-                intake));
+        .whileTrue(Commands.run(() -> intake.setRollerSpeed(ROLLER_MAX_SPEED * manipController.getLeftTriggerAxis()), intake));
     manipController
         .rightTrigger()
-        .whileTrue(
-            Commands.run(
-                () -> {
-                  intake.setRollerSpeed(-ROLLER_MAX_SPEED * manipController.getRightTriggerAxis());
-                },
-                intake));
+        .whileTrue(Commands.run(() -> intake.setRollerSpeed(-ROLLER_MAX_SPEED * manipController.getRightTriggerAxis()), intake));
 
     shooter.setDefaultCommand(
         Commands.run(
@@ -247,6 +234,8 @@ public class RobotContainer {
 
     manipController.b().whileTrue(Commands.run(() -> indexer.setRollerSpeed(1400), indexer));
 
+    manipController.y().whileTrue(ShooterCommands.shootWithHoming(shooter, indexer, () -> drive.getDistToHub()));
+
     manipController // short
         .a()
         .whileTrue(
@@ -263,14 +252,6 @@ public class RobotContainer {
                 () -> {
                   shooter.setVelocity(-2990);
                   shooter.applyHoodSetpoint(Rotation2d.fromDegrees(16));
-                },
-                shooter));
-    manipController // side
-        .y()
-        .whileTrue(
-            Commands.run(
-                () -> {
-                  indexer.setRollerSpeed(-200);
                 },
                 shooter));
   }
