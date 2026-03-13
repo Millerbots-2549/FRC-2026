@@ -34,8 +34,8 @@ import java.util.function.Supplier;
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
 
-  private static final double ANGLE_KP = 8.0;
-  private static final double ANGLE_KD = 0.4;
+  private static final double ANGLE_KP = 7.0;
+  private static final double ANGLE_KD = 0.01;
   private static final double ANGLE_MAX_VELOCITY = 8.0;
   private static final double ANGLE_MAX_ACCELERATION = 20.0;
 
@@ -172,7 +172,7 @@ public class DriveCommands {
       Drive drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      Supplier<Pose2d> poseSupplier) {
+      Supplier<Translation2d> poseSupplier) {
 
     // Create PID controller
     ProfiledPIDController angleController =
@@ -192,12 +192,8 @@ public class DriveCommands {
 
               double angle =
                   Math.atan2(
-                      drive.getPose().getY()
-                          - (ySupplier.getAsDouble() * 0.05)
-                          - poseSupplier.get().getY(),
-                      drive.getPose().getX()
-                          - (xSupplier.getAsDouble() * 0.05)
-                          - poseSupplier.get().getX());
+                      poseSupplier.get().getY() - drive.getPose().getY(),
+                      poseSupplier.get().getX() - drive.getPose().getX());
               // Calculate angular speed
               double omega = angleController.calculate(drive.getRotation().getRadians(), angle);
 

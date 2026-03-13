@@ -185,6 +185,24 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
+    driverController
+        .a()
+        .whileTrue(
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> -driverController.getLeftY(),
+                () -> -driverController.getLeftX(),
+                () -> Rotation2d.kZero));
+
+    driverController
+        .b()
+        .whileTrue(
+            DriveCommands.joystickDrivePointingTowards(
+                drive,
+                () -> -driverController.getLeftY(),
+                () -> -driverController.getLeftX(),
+                () -> Constants.HUB_TRANSLATION));
+
     // Reset gyro to 0° when B button is pressed
     driverController
         .y()
