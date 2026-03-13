@@ -10,7 +10,6 @@ package frc.robot;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -34,17 +33,12 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.drive.ModuleIOTalonSim;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.indexer.IndexerIO;
-import frc.robot.subsystems.indexer.IndexerIOTalonFX;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakePivotIO;
-import frc.robot.subsystems.intake.IntakePivotIOSpark;
 import frc.robot.subsystems.intake.IntakeRollerIO;
-import frc.robot.subsystems.intake.IntakeRollerIOSpark;
+import frc.robot.subsystems.shooter.FeederIO;
 import frc.robot.subsystems.shooter.FlywheelIO;
-import frc.robot.subsystems.shooter.FlywheelIOTalonFX;
-import frc.robot.subsystems.shooter.HoodIO;
-import frc.robot.subsystems.shooter.HoodIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -97,12 +91,15 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});*/
-        intake =
-            new Intake(new IntakePivotIOSpark(), new IntakeRollerIOSpark(new SparkMaxConfig()));
-        // shooter = new Shooter(new HoodIOTalonFX(), new FlywheelIOTalonFX());
+        /*
+        intake = new Intake(new IntakePivotIOSpark(), new IntakeRollerIOSpark(new SparkMaxConfig()));
         shooter = new Shooter(new HoodIOTalonFX(), new FlywheelIOTalonFX());
-        // indexer = new Indexer(new IndexerIOSpark(new SparkMaxConfig()));
         indexer = new Indexer(new IndexerIOTalonFX());
+        */
+
+        intake = new Intake(new IntakePivotIO() {}, new IntakeRollerIO() {});
+        shooter = new Shooter(new FlywheelIO() {}, new FeederIO() {});
+        indexer = new Indexer(new IndexerIO() {});
         break;
 
       case SIM:
@@ -123,7 +120,7 @@ public class RobotContainer {
                 new ModuleIOTalonSim(swerveDriveSimulation.getModules()[2]),
                 new ModuleIOTalonSim(swerveDriveSimulation.getModules()[3]));
         intake = new Intake(new IntakePivotIO() {}, new IntakeRollerIO() {});
-        shooter = new Shooter(new HoodIO() {}, new FlywheelIO() {});
+        shooter = new Shooter(new FlywheelIO() {}, new FeederIO() {});
         indexer = new Indexer(new IndexerIO() {});
         break;
 
@@ -137,7 +134,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
         intake = new Intake(new IntakePivotIO() {}, new IntakeRollerIO() {});
-        shooter = new Shooter(new HoodIO() {}, new FlywheelIO() {});
+        shooter = new Shooter(new FlywheelIO() {}, new FeederIO() {});
         indexer = new Indexer(new IndexerIO() {});
         break;
     }
@@ -146,8 +143,8 @@ public class RobotContainer {
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
     // Set up manual autos
-    autoChooser.addOption("Shoot from against hub", Autos.shootFromHub(shooter, indexer));
-    autoChooser.addOption("Shoot from start pos", Autos.shootAllBallsFromStartPos(drive, shooter, indexer));
+    autoChooser.addOption(
+        "Shoot from start pos", Autos.shootAllBallsFromStartPos(drive, shooter, indexer));
     autoChooser.addOption("One Cycle", Autos.singleCycleAuto(shooter, indexer, intake, drive));
 
     // Set up SysId routines
@@ -206,54 +203,38 @@ public class RobotContainer {
 
     manipController
         .leftBumper()
-        .onTrue(Commands.run(() -> intake.setIntakeAngle(Rotation2d.fromDegrees(IntakeConstants.PIVOT_MAX_DEGREES), true), intake));
+        .onTrue(
+            Commands.run(
+                () ->
+                    intake.setIntakeAngle(
+                        Rotation2d.fromDegrees(IntakeConstants.PIVOT_MAX_DEGREES), true),
+                intake));
     manipController
         .rightBumper()
         .onTrue(Commands.run(() -> intake.setIntakeAngle(Rotation2d.fromDegrees(0), true), intake));
     manipController
         .leftTrigger()
-        .whileTrue(Commands.run(() -> intake.setRollerSpeed(ROLLER_MAX_SPEED * manipController.getLeftTriggerAxis()), intake));
+        .whileTrue(
+            Commands.run(
+                () ->
+                    intake.setRollerSpeed(ROLLER_MAX_SPEED * manipController.getLeftTriggerAxis()),
+                intake));
     manipController
         .rightTrigger()
-        .whileTrue(Commands.run(() -> intake.setRollerSpeed(-ROLLER_MAX_SPEED * manipController.getRightTriggerAxis()), intake));
+        .whileTrue(
+            Commands.run(
+                () ->
+                    intake.setRollerSpeed(
+                        -ROLLER_MAX_SPEED * manipController.getRightTriggerAxis()),
+                intake));
 
-    shooter.setDefaultCommand(
-        Commands.run(
-            () -> {
-              if (Math.abs(manipController.getLeftY()) > 0.1) {
-                if (manipController.getLeftY() > 0) {
-                  shooter.raiseHood();
-                } else {
-                  shooter.lowerHood();
-                }
-              }
-              shooter.sustainHood();
-              shooter.setVelocity(0);
-            },
-            shooter));
+    shooter.setDefaultCommand(Commands.run(() -> shooter.setVelocity(0), shooter));
 
     manipController.b().whileTrue(Commands.run(() -> indexer.setRollerSpeed(1400), indexer));
 
-    manipController.y().whileTrue(ShooterCommands.shootWithHoming(shooter, indexer, () -> drive.getDistToHub()));
-
-    manipController // short
-        .a()
-        .whileTrue(
-            Commands.run(
-                () -> {
-                  shooter.setVelocity(-2700);
-                  shooter.applyHoodSetpoint(Rotation2d.fromDegrees(5));
-                },
-                shooter));
-    manipController // long
-        .x()
-        .whileTrue(
-            Commands.run(
-                () -> {
-                  shooter.setVelocity(-2990);
-                  shooter.applyHoodSetpoint(Rotation2d.fromDegrees(16));
-                },
-                shooter));
+    manipController
+        .y()
+        .whileTrue(ShooterCommands.shootWithHoming(shooter, indexer, () -> drive.getDistToHub()));
   }
 
   /**
@@ -262,6 +243,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return Autos.shootFromHub(shooter, indexer);
+    return autoChooser.get();
   }
 }

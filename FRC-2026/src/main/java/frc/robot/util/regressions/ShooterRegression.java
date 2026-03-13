@@ -10,32 +10,9 @@ import frc.lib.math.PolynomialRegression;
 
 /** Add your docs here. */
 public class ShooterRegression {
-  public static final double HOOD_PADDING_DEGREES = 2;
   public static final double SHOOTER_PADDING_VELOCITY = 100;
 
-  public static final double[] PADDING = {SHOOTER_PADDING_VELOCITY, HOOD_PADDING_DEGREES};
-
-  // hood
-  public static double defaultHoodAngle = Math.toRadians(0);
-  public static boolean useHoodAimPolynomial = false;
-
   public static boolean useSmartDashboard = false;
-
-  public static InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble> hoodAutoAimMap =
-      new InterpolatingTreeMap<>();
-  public static PolynomialRegression hoodAutoAimPolynomial;
-
-  public static double[][] hoodRegression;
-
-  static {
-    hoodRegression = RegressionConstants.HOOD_MANUAL_ANGLE;
-
-    for (double[] pair : hoodRegression) {
-      hoodAutoAimMap.put(new InterpolatingDouble(pair[0]), new InterpolatingDouble(pair[1]));
-    }
-
-    hoodAutoAimPolynomial = new PolynomialRegression(hoodRegression, 1);
-  }
 
   // shooter
   public static double defaultShootingRPM = 2950.0;

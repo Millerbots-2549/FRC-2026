@@ -23,4 +23,5 @@ public class ShooterConstants {
   public static final double FLYWHEEL_VELOCITY_THRESHOLD = 15.0;
 
   public static final double FLYWHEEL_AGITATE_VELOCITY = 150.0;
+  public static final double FEED_VELOCITY = 100;
 }

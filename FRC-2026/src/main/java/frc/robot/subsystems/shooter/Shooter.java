@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems.shooter;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.data.InterpolatingDouble;
 import frc.lib.data.InterpolatingTreeMap;
@@ -12,64 +11,37 @@ import frc.lib.math.PolynomialRegression;
 import frc.robot.util.regressions.ShooterRegression;
 
 public class Shooter extends SubsystemBase {
-  private final HoodIO hoodIO;
-  private final HoodIOInputsAutoLogged hoodInputs = new HoodIOInputsAutoLogged();
-
   private final FlywheelIO flywheelIO;
   private final FlywheelIOInputsAutoLogged flywheelInputs = new FlywheelIOInputsAutoLogged();
 
-  private final PolynomialRegression hoodAngleRegression = ShooterRegression.hoodAutoAimPolynomial;
+  private final FeederIO feederIO;
+  private final FeederIOInputsAutoLogged feederInputs = new FeederIOInputsAutoLogged();
+
   private final PolynomialRegression flywheelSpeedRegression =
       ShooterRegression.flywheelAutoAimPolynomial;
-  private final InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble>
-      hoodAngleInterpolator = ShooterRegression.hoodAutoAimMap;
   private final InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble>
       flywheelSpeedInterpolator = ShooterRegression.flywheelAutoAimMap;
 
   /** Creates a new ShooterSubsystem. */
-  public Shooter(HoodIO hoodIO, FlywheelIO flywheelIO) {
-    this.hoodIO = hoodIO;
+  public Shooter(FlywheelIO flywheelIO, FeederIO feederIO) {
     this.flywheelIO = flywheelIO;
-  }
-
-  public void applyHoodSetpoint(Rotation2d setpoint) {
-    hoodIO.applySetpoint(setpoint);
-  }
-
-  private double setpoint = 0.0;
-
-  public void sustainHood() {
-    hoodIO.applySetpoint(Rotation2d.fromRadians(setpoint));
-  }
-
-  public void raiseHood() {
-    setpoint += 0.002;
-    sustainHood();
-  }
-
-  public void lowerHood() {
-    setpoint -= 0.002;
-    sustainHood();
+    this.feederIO = feederIO;
   }
 
   public void applyAutoAimDistance(double distanceMeters) {
-    double hoodAngle;
-    if (ShooterRegression.useHoodAimPolynomial) {
-      hoodAngle = hoodAngleRegression.predict(distanceMeters);
-    } else {
-      hoodAngle =
-          hoodAngleInterpolator.getInterpolated(new InterpolatingDouble(distanceMeters)).value;
-    }
     double flywheelSpeed;
-    if (ShooterRegression.useHoodAimPolynomial) {
+    if (ShooterRegression.useFlywheelAutoAimPolynomial) {
       flywheelSpeed = flywheelSpeedRegression.predict(distanceMeters);
     } else {
       flywheelSpeed =
           flywheelSpeedInterpolator.getInterpolated(new InterpolatingDouble(distanceMeters)).value;
     }
 
-    hoodIO.applySetpoint(Rotation2d.fromRadians(hoodAngle));
     flywheelIO.setVelocity(flywheelSpeed);
+  }
+
+  public void setFeederVelocity(double RPM) {
+    feederIO.setVelocity(RPM);
   }
 
   public void setVelocity(double vel) {
@@ -78,8 +50,8 @@ public class Shooter extends SubsystemBase {
 
   @Override
   public void periodic() {
-    hoodIO.updateInputs(hoodInputs);
     flywheelIO.updateInputs(flywheelInputs);
+    feederIO.updateInputs(feederInputs);
   }
 
   public double getFlywheelVelocity() {
